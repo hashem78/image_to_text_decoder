@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:image_to_text_decoder/repositories/aws_transcription_repository.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_to_text_decoder/transcribe_bloc/transcribe_bloc_data.dart';
 
 import 'package:meta/meta.dart';
 import 'package:watcher/watcher.dart';
@@ -12,27 +13,35 @@ import 'package:clipboard/clipboard.dart';
 part 'transcribe_event.dart';
 part 'transcribe_state.dart';
 
-class TranscribeBloc extends Bloc<TranscribeEvent, TranscribeState> {
+class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
   TranscribeBloc({
-    this.writeToFile = true,
-  }) : super(TranscribeInitial());
+    bool writeToFile = true,
+  })  : assert(
+          AWSTranscriptionRepository.isReady,
+          "Call init on AWSTranscriptionRepository",
+        ),
+        super(
+          TranscribeInitial(
+            filePath: HydratedBloc.storage.read('filePath'),
+            screenShotPath: HydratedBloc.storage.read('screenshotPath'),
+            writeToFile: HydratedBloc.storage.read('writeToFile'),
+          ),
+        ) {
+    _setDirectoryWatcher(HydratedBloc.storage.read('screenshotPath'));
+  }
 
-  late String screenShotPath;
-  late String filePath;
-  bool writeToFile;
-
-  StreamSubscription? directoryWatcherSubscription;
-  static Stream<WatchEvent> getDirectoryWatchStream(String path) {
+  StreamSubscription? _directoryWatcherSubscription;
+  static Stream<WatchEvent> _getDirectoryWatchStream(String path) {
     return DirectoryWatcher(path)
         .events
         .where((event) => event.type == ChangeType.ADD);
   }
 
-  void setDirectoryWatcher(String path) {
-    directoryWatcherSubscription?.cancel();
-    screenShotPath = path;
-    directoryWatcherSubscription =
-        TranscribeBloc.getDirectoryWatchStream(path).listen(
+  void _setDirectoryWatcher(String path) {
+    _directoryWatcherSubscription?.cancel();
+
+    _directoryWatcherSubscription =
+        TranscribeBloc._getDirectoryWatchStream(path).listen(
       (_) {
         File(_.path).readAsBytes().then(
           (value) {
@@ -43,58 +52,75 @@ class TranscribeBloc extends Bloc<TranscribeEvent, TranscribeState> {
     );
   }
 
-  void setWriteToFile(bool value) {
-    writeToFile = value;
-  }
-
-  void setFilePath(String path) {
-    filePath = path;
-    AWSTranscriptionRepository.changeFilePath(path);
-  }
-
   @override
   Stream<TranscribeState> mapEventToState(
     TranscribeEvent event,
   ) async* {
     if (event is TranscribeChangeScreenShotDirectoryEvent) {
-      if (event.path != screenShotPath) {
+      if (event.path != state.blocData.screenShotPath) {
         AWSTranscriptionRepository.changeScreenshotPath(event.path);
-        screenShotPath = event.path;
-        yield TranscribeScreenshotPathChanged(screenShotPath: screenShotPath);
 
-        setDirectoryWatcher(event.path);
+        yield TranscribeScreenshotPathChanged(
+          blocData: state.blocData.copyWith(screenShotPath: event.path),
+        );
+
+        _setDirectoryWatcher(event.path);
       }
     } else if (event is TranscribeErrorEvent) {
-      yield TranscribeWaitingErrorResponse(error: event.error);
+      yield TranscribeWaitingErrorResponse(
+        blocData: state.blocData,
+        error: event.error,
+      );
     } else if (event is TranscribeSuccessEvent) {
-      yield TranscribeSuccessResponse(data: event.data);
-      if (writeToFile) {
-        AWSTranscriptionRepository.writeToFile(filePath, event.data);
+      yield TranscribeSuccessResponse(
+        blocData: state.blocData,
+        data: event.data,
+      );
+      if (state.blocData.writeToFile) {
+        AWSTranscriptionRepository.writeToFile(
+            state.blocData.filePath, event.data);
       }
       FlutterClipboard.copy(event.data);
     } else if (event is TranscribeChangeFilePath) {
-      setFilePath(event.path);
-      yield TranscribeFilePathChanged(filePath: filePath);
+      AWSTranscriptionRepository.changeFilePath(event.path);
+      yield TranscribeFilePathChanged(
+        blocData: state.blocData.copyWith(filePath: event.path),
+      );
     } else if (event is TranscribeScreenshotEvent) {
-      yield TranscribeScreenshotTaken(event.data);
-      yield TranscribeWaitingForResponse();
+      yield TranscribeScreenshotTaken(
+        blocData: state.blocData,
+        data: event.data,
+      );
+      yield TranscribeWaitingForResponse(blocData: state.blocData);
       await Future.delayed(const Duration(seconds: 2));
       AWSTranscriptionRepository.request(event.data).then(
         (value) => add(TranscribeSuccessEvent(data: value)),
         onError: (error) => add(TranscribeErrorEvent(error: error)),
       );
     } else if (event is TranscribeChangeWriteToFile) {
-      setWriteToFile(event.writeToFile);
-      yield TranscribeWriteToFileSet(
-        writeToFile: writeToFile,
-        path: filePath,
+      yield TranscribeWriteToFileChanged(
+        blocData: state.blocData.copyWith(writeToFile: event.writeToFile),
       );
     }
   }
 
   @override
   Future<void> close() async {
-    directoryWatcherSubscription?.cancel();
+    _directoryWatcherSubscription?.cancel();
     super.close();
+  }
+
+  @override
+  TranscribeState? fromJson(Map<String, dynamic> json) {
+    return TranscribeInitial(
+      filePath: json['filePath'],
+      screenShotPath: json['screenShotPath'],
+      writeToFile: json['writeToFile'],
+    );
+  }
+
+  @override
+  Map<String, dynamic>? toJson(TranscribeState state) {
+    return state.blocData.toMap();
   }
 }

@@ -1,7 +1,6 @@
-import 'dart:io';
-
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:image_to_text_decoder/type_writing_cubit/type_writing_cubit.dart';
-import 'package:image_to_text_decoder/widgets/cheating_toolbox.dart';
+import 'package:image_to_text_decoder/widgets/toolbox.dart';
 import 'package:image_to_text_decoder/widgets/current_file_path.dart';
 import 'package:image_to_text_decoder/widgets/screenshot_path_status.dart';
 import 'package:image_to_text_decoder/widgets/screenshot_preview.dart';
@@ -20,21 +19,18 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   window_size.setWindowMaxSize(const Size(500, 600));
   window_size.setWindowMinSize(const Size(500, 600));
-  var filePath = await AWSTranscriptionRepository.getFilePath();
-  if (filePath == null) {
-    final tempFile = await File('main.cpp').create();
-    filePath = tempFile.path;
-  }
-  final screenShotPath = await AWSTranscriptionRepository.getSreenshotPath() ??
-      (await getApplicationDocumentsDirectory()).path;
+  final storageDir = await getApplicationSupportDirectory();
+
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: storageDir,
+  );
+  await AWSTranscriptionRepository.init();
 
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => TranscribeBloc()
-            ..setDirectoryWatcher(screenShotPath)
-            ..setFilePath(filePath!),
+          create: (context) => TranscribeBloc(),
         ),
         BlocProvider(
           create: (_) => TypeWritingCubit(),
@@ -50,6 +46,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
+      themeMode: ThemeMode.system,
       home: MainPage(),
     );
   }
@@ -61,7 +58,10 @@ class MainPage extends HookWidget {
   Widget build(BuildContext context) {
     final removePairs = useValueNotifier(false);
     final useFiles = useValueNotifier(true);
+    final currentBrightness = MediaQuery.of(context).platformBrightness;
     return Scaffold(
+      backgroundColor:
+          currentBrightness == Brightness.light ? Colors.white : Colors.black,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -69,7 +69,7 @@ class MainPage extends HookWidget {
           const ScreenshotPathStatus(),
           const Expanded(child: ScreenshotPreview()),
           const WaitingForTranscriptionWidget(),
-          CheatingToolBox(useFiles: useFiles, removePairs: removePairs),
+          ToolBox(useFiles: useFiles, removePairs: removePairs),
           const Expanded(child: TranscriptionResponseView())
         ],
       ),

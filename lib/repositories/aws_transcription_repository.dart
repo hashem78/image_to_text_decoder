@@ -3,9 +3,19 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 
 class AWSTranscriptionRepository {
+  static bool isReady = false;
+  static Future<void> init() async {
+    await _initFilePath();
+    await _initSreenshotPath();
+    _initWriteToFile();
+
+    isReady = true;
+  }
+
   static Future<String> request(Uint8List data) async {
     final response = await http.post(
       Uri.parse(
@@ -34,24 +44,41 @@ class AWSTranscriptionRepository {
   }
 
   static Future<void> changeFilePath(String path) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString('filePath', path);
+    await HydratedBloc.storage.write('filePath', path);
   }
 
   static Future<void> changeScreenshotPath(String path) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString('screenshotPath', path);
+    await HydratedBloc.storage.write('screenshotPath', path);
   }
 
-  static Future<String?> getFilePath() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    return prefs.getString('filePath');
+  static Future<void> changeWriteToFile(bool val) async {
+    await HydratedBloc.storage.write('writeToFile', val);
   }
 
-  static Future<String?> getSreenshotPath() async {
-    final prefs = await SharedPreferences.getInstance();
+  static Future<String> _initFilePath() async {
+    var filePath = HydratedBloc.storage.read('filePath') as String?;
+    if (filePath == null) {
+      final tempFile = await File('main.cpp').create();
+      filePath = tempFile.path;
+    }
+    await changeFilePath(filePath);
+    return filePath;
+  }
 
-    return prefs.getString('screenshotPath');
+  static Future<String?> _initSreenshotPath() async {
+    var screenshotPath = HydratedBloc.storage.read('screenshotPath') as String?;
+    if (screenshotPath == null) {
+      screenshotPath = (await getApplicationSupportDirectory()).path;
+    }
+    await changeScreenshotPath(screenshotPath);
+    return screenshotPath;
+  }
+
+  static Future<bool> _initWriteToFile() async {
+    final bool writeToFile = HydratedBloc.storage.read('writeToFile') ?? false;
+    print('writeToFile = $writeToFile');
+
+    await changeWriteToFile(writeToFile);
+    return writeToFile;
   }
 }

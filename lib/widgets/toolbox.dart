@@ -1,4 +1,4 @@
-import 'package:image_to_text_decoder/widgets/cheating_buttons.dart';
+import 'package:image_to_text_decoder/widgets/toolbox_buttons.dart';
 import 'package:image_to_text_decoder/widgets/remove_pair_checkbox.dart';
 import 'package:image_to_text_decoder/widgets/stop_type_writing_button.dart';
 import 'package:image_to_text_decoder/widgets/type_write_button.dart';
@@ -9,8 +9,8 @@ import 'package:image_to_text_decoder/widgets/write_to_file_checkbox.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-class CheatingToolBox extends HookWidget {
-  const CheatingToolBox({
+class ToolBox extends HookWidget {
+  const ToolBox({
     Key? key,
     required this.useFiles,
     required this.removePairs,
@@ -28,7 +28,7 @@ class CheatingToolBox extends HookWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CheatingButtons(useFiles: useFiles),
+            ToolBoxButtons(useFiles: useFiles),
             WriteToFileCheckBox(useFiles: useFiles),
             RemovePairsCheckBox(removePairs: removePairs),
           ],

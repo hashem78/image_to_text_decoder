@@ -5,8 +5,8 @@ import 'package:file_selector/file_selector.dart' as file_selector;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class CheatingButtons extends HookWidget {
-  const CheatingButtons({
+class ToolBoxButtons extends HookWidget {
+  const ToolBoxButtons({
     Key? key,
     required this.useFiles,
   }) : super(key: key);

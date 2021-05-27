@@ -13,19 +13,15 @@ class CurrentFilePathStatus extends StatelessWidget {
       buildWhen: (previous, current) {
         return current is TranscribeInitial ||
             current is TranscribeFilePathChanged ||
-            current is TranscribeWriteToFileSet;
+            current is TranscribeWriteToFileChanged;
       },
       builder: (context, state) {
-        if (state is TranscribeInitial) {
-          return Text(context.read<TranscribeBloc>().filePath);
-        } else if (state is TranscribeFilePathChanged) {
-          return Text(state.filePath);
-        } else if (state is TranscribeWriteToFileSet) {
-          if (state.writeToFile) {
-            return Text(state.path);
+        if (state is TranscribeWriteToFileChanged) {
+          if (state.blocData.writeToFile) {
+            return Text(state.blocData.filePath);
           }
         }
-        return SizedBox();
+        return Text(state.blocData.filePath);
       },
     );
   }

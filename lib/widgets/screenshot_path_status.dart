@@ -14,14 +14,7 @@ class ScreenshotPathStatus extends StatelessWidget {
         return current is TranscribeInitial ||
             current is TranscribeScreenshotPathChanged;
       },
-      builder: (context, state) {
-        if (state is TranscribeInitial) {
-          return Text(context.read<TranscribeBloc>().screenShotPath);
-        } else if (state is TranscribeScreenshotPathChanged) {
-          return Text(context.read<TranscribeBloc>().screenShotPath);
-        }
-        return Container();
-      },
+      builder: (_, state) => Text(state.blocData.screenShotPath),
     );
   }
 }
