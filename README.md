@@ -19,7 +19,7 @@ image_to_text_decoder is a simple flutter application that calls an AWS lambda f
 
     2- Run the application as you'd run any executable.
     
-    3- Inorder for the decoding to work you'll need to set a valid screenshotting path;this folder is tracked for creation changes so make sure it's the same directory/folder where your screenshotting program sends its captures and make sure you have read/write permissions.
+- Inorder for the decoding to work you'll need to set a valid screenshotting path;this folder is tracked for creation changes so make sure it's the same directory/folder where your screenshotting program sends its captures and make sure you have read/write permissions.
 
 \*If you want to use MOSS functionality you'll have to supply your own .perl script in the root folder of where you extracted your binaries, get MOSS from this link https://theory.stanford.edu/~aiken/moss/ and you need to make sure perl is installed on your system.
 
