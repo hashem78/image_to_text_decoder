@@ -22,7 +22,7 @@ class TypeWriteDelaySlider extends HookWidget {
           min: 1,
           max: 10,
           divisions: 10,
-          label: val.toString(),
+          label: val.toInt().toString(),
         ),
       ],
     );

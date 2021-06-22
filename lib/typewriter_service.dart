@@ -55,7 +55,7 @@ class KeyboardService {
       } else {
         sendEnter();
       }
-      await Future.delayed(Duration(milliseconds: speed * 100));
+      await Future.delayed(Duration(milliseconds: speed.toInt() * 100));
       if (completer.isCompleted) {
         free(kb);
         cubit.reset();

@@ -76,7 +76,6 @@ class AWSTranscriptionRepository {
 
   static Future<bool> _initWriteToFile() async {
     final bool writeToFile = HydratedBloc.storage.read('writeToFile') ?? false;
-    print('writeToFile = $writeToFile');
 
     await changeWriteToFile(writeToFile);
     return writeToFile;
