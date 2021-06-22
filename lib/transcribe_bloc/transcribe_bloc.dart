@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:image_to_text_decoder/repositories/aws_transcription_repository.dart';
+import 'package:image_to_text_decoder/sound_playing_service.dart';
 import 'package:image_to_text_decoder/transcribe_bloc/transcribe_bloc_data.dart';
 
 import 'package:meta/meta.dart';
@@ -31,17 +32,14 @@ class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
   }
 
   StreamSubscription? _directoryWatcherSubscription;
-  static Stream<WatchEvent> _getDirectoryWatchStream(String path) {
-    return DirectoryWatcher(path)
-        .events
-        .where((event) => event.type == ChangeType.ADD);
-  }
 
   void _setDirectoryWatcher(String path) {
     _directoryWatcherSubscription?.cancel();
 
-    _directoryWatcherSubscription =
-        TranscribeBloc._getDirectoryWatchStream(path).listen(
+    _directoryWatcherSubscription = DirectoryWatcher(path)
+        .events
+        .where((event) => event.type == ChangeType.ADD)
+        .listen(
       (_) {
         File(_.path).readAsBytes().then(
           (value) {
@@ -67,11 +65,13 @@ class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
         _setDirectoryWatcher(event.path);
       }
     } else if (event is TranscribeErrorEvent) {
+      SoundPlayingService.play();
       yield TranscribeWaitingErrorResponse(
         blocData: state.blocData,
         error: event.error,
       );
     } else if (event is TranscribeSuccessEvent) {
+      SoundPlayingService.play();
       yield TranscribeSuccessResponse(
         blocData: state.blocData,
         data: event.data,
@@ -92,10 +92,11 @@ class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
         data: event.data,
       );
       yield TranscribeWaitingForResponse(blocData: state.blocData);
-      await Future.delayed(const Duration(seconds: 2));
       AWSTranscriptionRepository.request(event.data).then(
         (value) => add(TranscribeSuccessEvent(data: value)),
-        onError: (error) => add(TranscribeErrorEvent(error: error)),
+        onError: (error) {
+          add(TranscribeErrorEvent(error: error.toString()));
+        },
       );
     } else if (event is TranscribeChangeWriteToFile) {
       yield TranscribeWriteToFileChanged(
