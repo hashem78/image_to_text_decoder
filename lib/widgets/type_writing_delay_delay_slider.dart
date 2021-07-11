@@ -15,7 +15,7 @@ class TypeWriteDelaySlider extends HookWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Type writing delay"),
+        const Text("Type writing delay"),
         Slider(
           value: val.toDouble(),
           onChanged: (value) => typeWriteDelay.value = value.toInt(),

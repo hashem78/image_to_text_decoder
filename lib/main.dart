@@ -67,7 +67,6 @@ class MainPage extends HookWidget {
   Widget build(BuildContext context) {
     final removePairs = useValueNotifier(false);
     final useFiles = useValueNotifier(true);
-    final currentBrightness = MediaQuery.of(context).platformBrightness;
 
     return BlocListener<CodeComparerBloc, CodeComparerState>(
       listener: (context, state) {
@@ -76,7 +75,7 @@ class MainPage extends HookWidget {
             context: context,
             builder: (context) {
               return AlertDialog(
-                title: Text("Response"),
+                title: const Text("Response"),
                 content: Linkify(
                   onOpen: (link) async {
                     if (await canLaunch(link.url)) {
@@ -96,7 +95,7 @@ class MainPage extends HookWidget {
         floatingActionButton: BlocBuilder<CodeComparerBloc, CodeComparerState>(
           builder: (context, state) {
             if (state is CodeComparerWaitingResponse) {
-              return FloatingActionButton(
+              return const FloatingActionButton(
                 onPressed: null,
                 child: CircularProgressIndicator(
                   color: Colors.red,
@@ -105,7 +104,7 @@ class MainPage extends HookWidget {
               );
             }
             return FloatingActionButton(
-              child: Icon(Icons.compare),
+              child: const Icon(Icons.compare),
               onPressed: () async {
                 final files = await file_selector.openFiles();
                 context.read<CodeComparerBloc>().add(
@@ -119,8 +118,6 @@ class MainPage extends HookWidget {
             );
           },
         ),
-        backgroundColor:
-            currentBrightness == Brightness.light ? Colors.white : Colors.black,
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

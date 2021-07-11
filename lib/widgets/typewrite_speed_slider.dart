@@ -15,7 +15,7 @@ class TypeWriteSpeedSlider extends HookWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Type writing speed"),
+        const Text("Type writing speed"),
         Slider(
           value: val.toDouble(),
           onChanged: (value) {

@@ -7,7 +7,7 @@ class TranscribeBlocData {
   final String filePath;
   final String screenShotPath;
   final bool writeToFile;
-  TranscribeBlocData({
+  const TranscribeBlocData({
     required this.filePath,
     required this.screenShotPath,
     required this.writeToFile,

@@ -3,7 +3,7 @@ part of 'transcribe_bloc.dart';
 @immutable
 abstract class TranscribeState {
   final TranscribeBlocData blocData;
-  TranscribeState({
+  const TranscribeState({
     required this.blocData,
   });
 }
@@ -23,7 +23,7 @@ class TranscribeInitial extends TranscribeState {
 }
 
 class TranscribeWaitingForResponse extends TranscribeState {
-  TranscribeWaitingForResponse({
+  const TranscribeWaitingForResponse({
     required TranscribeBlocData blocData,
   }) : super(
           blocData: blocData,
@@ -32,7 +32,7 @@ class TranscribeWaitingForResponse extends TranscribeState {
 
 class TranscribeWaitingErrorResponse extends TranscribeState {
   final String error;
-  TranscribeWaitingErrorResponse({
+  const TranscribeWaitingErrorResponse({
     required this.error,
     required TranscribeBlocData blocData,
   }) : super(blocData: blocData);
@@ -41,7 +41,7 @@ class TranscribeWaitingErrorResponse extends TranscribeState {
 class TranscribeSuccessResponse extends TranscribeState {
   final String data;
 
-  TranscribeSuccessResponse({
+  const TranscribeSuccessResponse({
     required this.data,
     required TranscribeBlocData blocData,
   }) : super(blocData: blocData);
@@ -50,26 +50,26 @@ class TranscribeSuccessResponse extends TranscribeState {
 class TranscribeScreenshotTaken extends TranscribeState {
   final Uint8List data;
 
-  TranscribeScreenshotTaken({
+  const TranscribeScreenshotTaken({
     required this.data,
     required TranscribeBlocData blocData,
   }) : super(blocData: blocData);
 }
 
 class TranscribeScreenshotPathChanged extends TranscribeState {
-  TranscribeScreenshotPathChanged({
+  const TranscribeScreenshotPathChanged({
     required TranscribeBlocData blocData,
   }) : super(blocData: blocData);
 }
 
 class TranscribeFilePathChanged extends TranscribeState {
-  TranscribeFilePathChanged({
+  const TranscribeFilePathChanged({
     required TranscribeBlocData blocData,
   }) : super(blocData: blocData);
 }
 
 class TranscribeWriteToFileChanged extends TranscribeState {
-  TranscribeWriteToFileChanged({
+  const TranscribeWriteToFileChanged({
     required TranscribeBlocData blocData,
   }) : super(blocData: blocData);
 }

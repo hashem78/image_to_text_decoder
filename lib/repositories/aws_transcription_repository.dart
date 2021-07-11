@@ -67,9 +67,7 @@ class AWSTranscriptionRepository {
 
   static Future<String?> _initSreenshotPath() async {
     var screenshotPath = HydratedBloc.storage.read('screenshotPath') as String?;
-    if (screenshotPath == null) {
-      screenshotPath = (await getApplicationSupportDirectory()).path;
-    }
+    screenshotPath ??= (await getApplicationSupportDirectory()).path;
     await changeScreenshotPath(screenshotPath);
     return screenshotPath;
   }

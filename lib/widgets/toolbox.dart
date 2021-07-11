@@ -38,7 +38,7 @@ class ToolBox extends HookWidget {
           padding: const EdgeInsets.all(5.0),
           decoration: BoxDecoration(
             border: Border.all(width: 3, color: Colors.green),
-            borderRadius: BorderRadius.all(Radius.circular(5)),
+            borderRadius: const BorderRadius.all(Radius.circular(5)),
           ),
           child: Column(
             children: [
@@ -52,7 +52,7 @@ class ToolBox extends HookWidget {
           ),
         ),
         const StopTypeWritingButton(),
-        Row(
+        Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             TypeWriteClipboardButton(
