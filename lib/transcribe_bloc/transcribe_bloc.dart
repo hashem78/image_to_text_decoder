@@ -36,16 +36,18 @@ class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
   void _setDirectoryWatcher(String path) {
     _directoryWatcherSubscription?.cancel();
 
-    _directoryWatcherSubscription = DirectoryWatcher(path)
-        .events
-        .where((event) => event.type == ChangeType.ADD)
-        .listen(
-      (_) {
-        File(_.path).readAsBytes().then(
-          (value) {
-            add(TranscribeScreenshotEvent(data: value));
-          },
-        );
+    _directoryWatcherSubscription = DirectoryWatcher(path).events.where(
+      (event) {
+        if (Platform.isLinux) {
+          return event.type == ChangeType.MODIFY;
+        } else {
+          return event.type == ChangeType.ADD;
+        }
+      },
+    ).listen(
+      (_) async {
+        final bytes = File(_.path).readAsBytesSync();
+        add(TranscribeScreenshotEvent(data: bytes));
       },
     );
   }
