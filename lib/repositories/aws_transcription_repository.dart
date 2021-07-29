@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -16,24 +18,48 @@ class AWSTranscriptionRepository {
     isReady = true;
   }
 
-  static Future<String> request(Uint8List data) async {
-    final response = await http.post(
-      Uri.parse(
-        'https://4ds5bcbcp8.execute-api.us-east-1.amazonaws.com/release/useTextractForCheating',
-      ),
-      body: jsonEncode(
-        {
-          'data': base64Encode(data),
-        },
-      ),
-    );
+  static Future<void> _request(Map<String, Object> message) async {
+    final port = message['port'] as SendPort;
+    final data = message['data'] as List<Uint8List>;
+    final decodedData = <String>[];
+    for (final pieceOfData in data) {
+      final response = await http.post(
+        Uri.parse(
+          'https://4ds5bcbcp8.execute-api.us-east-1.amazonaws.com/release/useTextractForCheating',
+        ),
+        body: jsonEncode(
+          {
+            'data': base64Encode(pieceOfData),
+          },
+        ),
+      );
 
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-      return decoded;
-    } else {
-      return Future.error("An error occured while transcribing...");
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        decodedData.add(decoded as String);
+      } else {
+        return Future.error("An error occured while transcribing...");
+      }
     }
+    port.send(decodedData.join('\n'));
+  }
+
+  static Future<String> request(
+    Uint8List data, {
+    List<Uint8List>? listOfData,
+  }) async {
+    final receivePort = ReceivePort();
+    final dataList = listOfData ?? [data];
+    final completer = Completer<String>();
+    Isolate.spawn(
+      _request,
+      {
+        "port": receivePort.sendPort,
+        "data": dataList,
+      },
+    );
+    receivePort.listen((message) => completer.complete(message));
+    return completer.future;
   }
 
   static void writeToFile(String filePath, String data) {
