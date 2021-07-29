@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:image_to_text_decoder/repositories/aws_transcription_repository.dart';
 import 'package:image_to_text_decoder/sound_playing_service.dart';
@@ -34,20 +35,16 @@ class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
   StreamSubscription? _directoryWatcherSubscription;
 
   void _setDirectoryWatcher(String path) {
-    _directoryWatcherSubscription?.cancel();
-
-    _directoryWatcherSubscription = DirectoryWatcher(path).events.where(
-      (event) {
-        if (Platform.isLinux) {
-          return event.type == ChangeType.MODIFY;
-        } else {
-          return event.type == ChangeType.ADD;
+    _directoryWatcherSubscription = DirectoryWatcher(path).events.listen(
+      (event) async {
+        if (event.type == ChangeType.ADD) {
+          await Future.delayed(const Duration(milliseconds: 500));
+          add(
+            TranscribeScreenshotEvent(
+              data: File(event.path).readAsBytesSync(),
+            ),
+          );
         }
-      },
-    ).listen(
-      (_) async {
-        final bytes = File(_.path).readAsBytesSync();
-        add(TranscribeScreenshotEvent(data: bytes));
       },
     );
   }
@@ -67,13 +64,13 @@ class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
         _setDirectoryWatcher(event.path);
       }
     } else if (event is TranscribeErrorEvent) {
-      SoundPlayingService.play();
+      SoundPlayingService.playFailure();
       yield TranscribeWaitingErrorResponse(
         blocData: state.blocData,
         error: event.error,
       );
     } else if (event is TranscribeSuccessEvent) {
-      SoundPlayingService.play();
+      SoundPlayingService.playSucess();
       yield TranscribeSuccessResponse(
         blocData: state.blocData,
         data: event.data,

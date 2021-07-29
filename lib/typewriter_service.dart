@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ffi';
+import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
@@ -22,7 +23,7 @@ class KeyboardService {
     free(kb);
   }
 
-  Future<void> send(
+  Future<void> sendWindows(
     String payload,
     bool removePairs,
     int speed,
@@ -66,5 +67,49 @@ class KeyboardService {
     cubit.reset();
     free(kb);
     subscription.cancel();
+  }
+
+  Future<void> sendLinux(
+    String payload,
+    bool removePairs,
+    int speed,
+    int delay,
+  ) async {
+    await Future.delayed(Duration(seconds: delay));
+    final completer = Completer();
+    final subscription = cubit.stream
+        .map(
+          (event) => event is TypeWritingStopped,
+        )
+        .listen(
+          (_) => completer.complete(),
+        );
+    completer.future.whenComplete(
+      () async {
+        await Process.run(
+          'killall',
+          ['-9', 'xdotool'],
+        );
+        cubit.reset();
+        subscription.cancel();
+      },
+    );
+    if (removePairs) {
+      await Process.run(
+        'xdotool',
+        [
+          'type',
+          '--delay',
+          (speed * 100).toString(),
+          payload.replaceAll(RegExp(r'[\)\}]'), '')
+        ],
+      );
+    } else {
+      await Process.run(
+        'xdotool',
+        ['type', '--delay', (speed * 100).toString(), payload],
+      );
+    }
+    cubit.reset();
   }
 }

@@ -1,3 +1,4 @@
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:image_to_text_decoder/code_comparer_bloc/code_comparer_bloc.dart';
@@ -22,6 +23,7 @@ import 'package:file_selector/file_selector.dart' as file_selector;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  DartVLC.initialize();
 
   window_size.setWindowMaxSize(const Size(500, 600));
   window_size.setWindowMinSize(const Size(500, 600));

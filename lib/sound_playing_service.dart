@@ -1,15 +1,16 @@
-import 'dart:ffi';
-import 'dart:io';
-
-import 'package:ffi/ffi.dart';
-import 'package:win32/win32.dart';
+import 'package:dart_vlc/dart_vlc.dart';
 
 class SoundPlayingService {
-  static void play() {
-    if (Platform.isWindows) {
-      Pointer<Utf16> sound = "SystemExclamation".toNativeUtf16();
-      PlaySound(sound, 0, SND_ASYNC | SND_ALIAS);
-      free(sound);
-    }
+  static final Player _player = Player(id: 69420);
+  static void playSucess() {
+    Media media = Media.asset('assets/sounds/success.mp3');
+    _player.stop();
+    _player.open(media);
+  }
+
+  static void playFailure() {
+    Media media = Media.asset('assets/sounds/failure.mp3');
+    _player.stop();
+    _player.open(media);
   }
 }
