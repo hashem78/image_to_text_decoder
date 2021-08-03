@@ -23,7 +23,7 @@ dependencies:
   file_selector: ^0.8.2
   file_selector_linux: ^0.0.2
   file_selector_windows: ^0.0.2
-  flutter_bloc: ^7.0.1
+  flutter_bloc: ^7.1.0
   flutter_hooks: ^0.17.0
   flutter_linkify: ^5.0.2
   http: ^0.13.3
