@@ -25,7 +25,7 @@ class AWSTranscriptionRepository {
     for (final pieceOfData in data) {
       final response = await http.post(
         Uri.parse(
-          'https://4ds5bcbcp8.execute-api.us-east-1.amazonaws.com/release/useTextractForCheating',
+          'https://0uoixvmz2g.execute-api.us-east-1.amazonaws.com/default/useTextractForCheating',
         ),
         body: jsonEncode(
           {
