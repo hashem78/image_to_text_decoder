@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:image_to_text_decoder/clipboard_monitor_bloc/clipboard_monitor_bloc.dart';
 import 'package:image_to_text_decoder/repositories/aws_transcription_repository.dart';
 import 'package:image_to_text_decoder/sound_playing_service.dart';
 import 'package:image_to_text_decoder/transcribe_bloc/transcribe_bloc_data.dart';
@@ -18,6 +19,7 @@ part 'transcribe_state.dart';
 class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
   TranscribeBloc({
     bool writeToFile = true,
+    required this.clipboardMonitorBloc,
   })  : assert(
           AWSTranscriptionRepository.isReady,
           "Call init on AWSTranscriptionRepository",
@@ -32,7 +34,34 @@ class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
     _setDirectoryWatcher(HydratedBloc.storage.read('screenshotPath'));
   }
 
+  StreamSubscription? _clipboardStreamSubscription;
+  ClipboardMonitorBloc clipboardMonitorBloc;
+
   StreamSubscription? _directoryWatcherSubscription;
+  void enableClipboardWatching() async {
+    await clipboardMonitorBloc.init();
+    _clipboardStreamSubscription ??= clipboardMonitorBloc.stream.listen(
+      (event) {
+        if (event is ClipboardMonitorDataChanged) {
+          if (event.data != null) {
+            add(
+              TranscribeScreenshotEvent(
+                data: event.data,
+              ),
+            );
+          } else {
+            print('data is null!');
+          }
+        }
+      },
+    );
+  }
+
+  void disableClipboardWatching() async {
+    await clipboardMonitorBloc.cleanUp();
+    _clipboardStreamSubscription?.cancel();
+    _clipboardStreamSubscription = null;
+  }
 
   void _setDirectoryWatcher(String path) {
     _directoryWatcherSubscription = DirectoryWatcher(path).events.listen(
@@ -88,10 +117,10 @@ class TranscribeBloc extends HydratedBloc<TranscribeEvent, TranscribeState> {
     } else if (event is TranscribeScreenshotEvent) {
       yield TranscribeScreenshotTaken(
         blocData: state.blocData,
-        data: event.data,
+        data: event.data!,
       );
       yield TranscribeWaitingForResponse(blocData: state.blocData);
-      AWSTranscriptionRepository.request(event.data).then(
+      AWSTranscriptionRepository.request(event.data!).then(
         (value) => add(TranscribeSuccessEvent(data: value)),
         onError: (error) {
           add(TranscribeErrorEvent(error: error.toString()));

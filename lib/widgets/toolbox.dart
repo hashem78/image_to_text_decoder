@@ -1,3 +1,5 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_to_text_decoder/transcribe_bloc/transcribe_bloc.dart';
 import 'package:image_to_text_decoder/widgets/toolbox_buttons.dart';
 import 'package:image_to_text_decoder/widgets/remove_pair_checkbox.dart';
 import 'package:image_to_text_decoder/widgets/stop_type_writing_button.dart';
@@ -14,10 +16,12 @@ class ToolBox extends HookWidget {
     Key? key,
     required this.useFiles,
     required this.removePairs,
+    required this.useClipboard,
   }) : super(key: key);
 
   final ValueNotifier<bool> useFiles;
   final ValueNotifier<bool> removePairs;
+  final ValueNotifier<bool> useClipboard;
 
   @override
   Widget build(BuildContext context) {
@@ -25,13 +29,17 @@ class ToolBox extends HookWidget {
     final typeWriteDelay = useValueNotifier<int>(3);
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ToolBoxButtons(useFiles: useFiles),
-            WriteToFileCheckBox(useFiles: useFiles),
-            RemovePairsCheckBox(removePairs: removePairs),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ToolBoxButtons(useFiles: useFiles),
+              WriteToFileCheckBox(useFiles: useFiles),
+              RemovePairsCheckBox(removePairs: removePairs),
+              UseClipboardCheckBox(useClipboard: useClipboard)
+            ],
+          ),
         ),
         Container(
           margin: const EdgeInsets.all(5.0),
@@ -68,6 +76,40 @@ class ToolBox extends HookWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class UseClipboardCheckBox extends HookWidget {
+  const UseClipboardCheckBox({
+    Key? key,
+    required this.useClipboard,
+  }) : super(key: key);
+
+  final ValueNotifier<bool> useClipboard;
+
+  @override
+  Widget build(BuildContext context) {
+    final val = useValueListenable(useClipboard);
+    return BlocBuilder<TranscribeBloc, TranscribeState>(
+      builder: (context, state) {
+        return Row(
+          children: [
+            Checkbox(
+              value: val,
+              onChanged: (value) {
+                useClipboard.value = value!;
+                if (value) {
+                  context.read<TranscribeBloc>().enableClipboardWatching();
+                } else {
+                  context.read<TranscribeBloc>().disableClipboardWatching();
+                }
+              },
+            ),
+            const Text("Clipboard Images"),
+          ],
+        );
+      },
     );
   }
 }

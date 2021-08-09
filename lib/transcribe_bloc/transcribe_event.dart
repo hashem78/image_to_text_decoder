@@ -11,7 +11,7 @@ class TranscribeChangeScreenShotDirectoryEvent extends TranscribeEvent {
 }
 
 class TranscribeScreenshotEvent extends TranscribeEvent {
-  final Uint8List data;
+  final Uint8List? data;
 
   TranscribeScreenshotEvent({
     required this.data,

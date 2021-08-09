@@ -1,6 +1,7 @@
 import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:image_to_text_decoder/clipboard_monitor_bloc/clipboard_monitor_bloc.dart';
 import 'package:image_to_text_decoder/code_comparer_bloc/code_comparer_bloc.dart';
 import 'package:image_to_text_decoder/code_comparer_langs.dart';
 import 'package:image_to_text_decoder/type_writing_cubit/type_writing_cubit.dart';
@@ -28,11 +29,11 @@ Future<void> main() async {
   window_size.setWindowMaxSize(const Size(500, 600));
   window_size.setWindowMinSize(const Size(500, 600));
   final storageDir = await getApplicationSupportDirectory();
-
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: storageDir,
   );
   await AWSTranscriptionRepository.init();
+  final clipboardMonitorBloc = ClipboardMonitorBloc();
 
   runApp(
     MultiBlocProvider(
@@ -41,10 +42,12 @@ Future<void> main() async {
           create: (context) => CodeComparerBloc(),
         ),
         BlocProvider(
-          create: (context) => TranscribeBloc(),
+          create: (context) => TranscribeBloc(
+            clipboardMonitorBloc: clipboardMonitorBloc,
+          ),
         ),
         BlocProvider(
-          create: (_) => TypeWritingCubit(),
+          create: (context) => TypeWritingCubit(),
         ),
       ],
       child: const MyApp(),
@@ -69,6 +72,7 @@ class MainPage extends HookWidget {
   Widget build(BuildContext context) {
     final removePairs = useValueNotifier(false);
     final useFiles = useValueNotifier(true);
+    final useClipboard = useValueNotifier(false);
 
     return BlocListener<CodeComparerBloc, CodeComparerState>(
       listener: (context, state) {
@@ -127,7 +131,11 @@ class MainPage extends HookWidget {
             const ScreenshotPathStatus(),
             const Expanded(child: ScreenshotPreview()),
             const WaitingForTranscriptionWidget(),
-            ToolBox(useFiles: useFiles, removePairs: removePairs),
+            ToolBox(
+              useFiles: useFiles,
+              removePairs: removePairs,
+              useClipboard: useClipboard,
+            ),
             const Expanded(child: TranscriptionResponseView())
           ],
         ),

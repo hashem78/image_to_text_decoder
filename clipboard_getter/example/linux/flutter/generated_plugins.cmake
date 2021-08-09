@@ -4,10 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   clipboard_getter
-  dart_vlc
-  file_selector_linux
-  url_launcher_linux
-  window_size
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
