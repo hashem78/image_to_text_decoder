@@ -1,7 +1,7 @@
 name: clipboard_getter
 description: A new flutter plugin project.
 version: 0.0.1
-homepage: null
+homepage: "/"
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -28,6 +28,8 @@ flutter:
   plugin:
     platforms:
       linux:
+        pluginClass: ClipboardGetterPlugin
+      windows:
         pluginClass: ClipboardGetterPlugin
   # To add assets to your plugin package, add an assets section, like this:
   # assets:
